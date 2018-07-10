@@ -9,7 +9,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.ahmadinfotech.salaryreport.R;
@@ -20,11 +19,11 @@ import com.ahmadinfotech.salaryreport.utils.AppUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AccountDetailAdapter extends Adapter<ViewHolder> {
+public class TransactionAdapter extends Adapter<ViewHolder> {
   private static final int FIRST_ROW = 2;
   private static final int HEADER_VIEW = 1;
   private boolean isSearching;
-  private boolean isTabullar;
+  private boolean isTabullar = true;
   private Balance mBalance;
   private Context mContext;
   public List<Transaction> mTransactions;
@@ -34,47 +33,6 @@ public class AccountDetailAdapter extends Adapter<ViewHolder> {
     void onItemClicked(Transaction transaction);
 
     void onItemLongClicked(Transaction transaction);
-  }
-
-  public class FirstViewHolder extends ViewHolder {
-    private final TextView mBalance = ((TextView) this.itemView.findViewById(R.id.text_balance));
-    private final TextView mCredit = ((TextView) this.itemView.findViewById(R.id.text_credit));
-    private final TextView mDate = ((TextView) this.itemView.findViewById(R.id.text_date));
-    private final TextView mDebit = ((TextView) this.itemView.findViewById(R.id.text_debit));
-    private final TextView mNarration = ((TextView) this.itemView.findViewById(R.id.text_narration));
-
-    public FirstViewHolder(View view) {
-      super(view);
-    }
-  }
-
-  public class HeaderViewHolder extends ViewHolder {
-    private final ImageView mImgAccount;
-    private final TextView mTvBalance;
-    private final TextView mTvCredit;
-    private final TextView mTvDebit;
-    private final TextView txtCategory;
-    private final TextView txtEmail;
-    private final TextView txtName;
-    private final TextView txtNumber;
-
-    public HeaderViewHolder(View itemView) {
-      super(itemView);
-      this.mTvCredit = (TextView) itemView.findViewById(R.id.txt_total_credit);
-      this.mTvDebit = (TextView) itemView.findViewById(R.id.txt_total_debit);
-      this.mTvBalance = (TextView) itemView.findViewById(R.id.txt_total_balance);
-      this.mImgAccount = (ImageView) itemView.findViewById(R.id.img_account);
-      this.txtName = (TextView) itemView.findViewById(R.id.tv_account_name);
-      this.txtEmail = (TextView) itemView.findViewById(R.id.tv_account_email);
-      this.txtNumber = (TextView) itemView.findViewById(R.id.tv_account_number);
-      this.txtCategory = (TextView) itemView.findViewById(R.id.tv_account_category);
-    }
-
-    private void setText() {
-      this.mTvCredit.setText(AccountDetailAdapter.this.mBalance.getCredit());
-      this.mTvDebit.setText(AccountDetailAdapter.this.mBalance.getDebit());
-      this.mTvBalance.setText(AccountDetailAdapter.this.mBalance.getBalance());
-    }
   }
 
   public class NormalViewHolder extends ViewHolder {
@@ -145,7 +103,7 @@ public class AccountDetailAdapter extends Adapter<ViewHolder> {
     }
   }
 
-  public AccountDetailAdapter(Context context, Account account, Balance balance, List<Transaction> transactions, boolean isTabullar) {
+  public TransactionAdapter(Context context, Account account, Balance balance, List<Transaction> transactions, boolean isTabullar) {
     this.mBalance = balance;
     this.mTransactions = transactions;
     this.mContext = context;
@@ -153,12 +111,6 @@ public class AccountDetailAdapter extends Adapter<ViewHolder> {
   }
 
   public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-    if (viewType == 1) {
-      return new HeaderViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_header_account_detail, parent, false));
-    }
-    if (viewType == 2) {
-      return new FirstViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.view_match_item_, parent, false));
-    }
     if (this.isTabullar) {
       return new VerticalItemHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.view_match_item_, parent, false));
     }
@@ -167,16 +119,7 @@ public class AccountDetailAdapter extends Adapter<ViewHolder> {
 
   public void onBindViewHolder(ViewHolder vh, int position) {
     try {
-      if (vh instanceof HeaderViewHolder) {
-        ((HeaderViewHolder) vh).setText();
-      } else if (vh instanceof FirstViewHolder) {
-        FirstViewHolder holder = (FirstViewHolder) vh;
-        holder.mDate.setText(this.mContext.getResources().getString(R.string.txt_Date));
-        holder.mCredit.setText(this.mContext.getResources().getString(R.string.txt_Credit));
-        holder.mDebit.setText(this.mContext.getResources().getString(R.string.txt_Debit));
-        holder.mBalance.setText(this.mContext.getResources().getString(R.string.txt_balance_amount));
-        holder.mNarration.setText(this.mContext.getResources().getString(R.string.txt_Narration));
-      } else {
+
         Transaction transaction;
         if (this.isSearching) {
           transaction = (Transaction) this.mTransactions.get(position);
@@ -222,7 +165,7 @@ public class AccountDetailAdapter extends Adapter<ViewHolder> {
         } else {
           AppUtils.setDrawable(this.mContext, holder3.mLayout, R.drawable.row_radius);
         }
-      }
+
     } catch (Exception e) {
       e.printStackTrace();
     }

@@ -1,11 +1,15 @@
 package com.ahmadinfotech.salaryreport.activity;
 
+import android.Manifest;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -24,14 +28,20 @@ import com.ahmadinfotech.salaryreport.dao.PdfDao;
 import com.ahmadinfotech.salaryreport.dao.Transaction;
 import com.ahmadinfotech.salaryreport.db.FetchData;
 import com.ahmadinfotech.salaryreport.export.GeneratePdf;
+import com.ahmadinfotech.salaryreport.fragment.DatewiseReport;
+import com.ahmadinfotech.salaryreport.fragment.MonthViewFragment;
+import com.ahmadinfotech.salaryreport.fragment.TransactionViewFragment;
 import com.ahmadinfotech.salaryreport.utils.AppConstants;
 import com.ahmadinfotech.salaryreport.utils.SessionManager;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.channels.FileChannel;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -52,6 +62,12 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        ActivityCompat.requestPermissions(this, new String[]{
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+        },666);
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -125,7 +141,19 @@ public class MainActivity extends AppCompatActivity
             export(0);
         }
         else if (id == R.id.nav_datewise_report) {
-
+            MonthViewFragment fragment = new MonthViewFragment();
+            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            ft.replace(R.id.content_frame, fragment);
+            ft.commit();
+        }
+        else if(id == R.id.nav_datewise_report1){
+            DatewiseReport report = new DatewiseReport();
+            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            ft.replace(R.id.content_frame, report);
+            ft.commit();
+        }
+        else if(id == R.id.nav_export_db){
+            exportDB();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -196,7 +224,7 @@ public class MainActivity extends AppCompatActivity
                             SimpleDateFormat sdf = new SimpleDateFormat(AppConstants.DateFormat.DB_DATE);
                             Date dt = new SimpleDateFormat("dd/MM/yyyy").parse(s);
                             transaction.setDate(sdf.format(dt));
-                            //transaction.setTransactionDate(new Timestamp(dt.getTime()));
+                            transaction.setTransactionDate(new Timestamp(dt.getTime()));
                         }
                         if(colIndex == 4){
                             transaction.setNarration(s);
@@ -272,6 +300,27 @@ public class MainActivity extends AppCompatActivity
                 return;
             default:
                 return;
+        }
+    }
+
+    private void exportDB() {
+        // TODO Auto-generated method stub
+        File data = Environment.getDataDirectory();
+        FileChannel source=null;
+        FileChannel destination=null;
+        String currentDBPath = "/data/"+ "com.ahmadinfotech.salaryreport" +"/databases/accounting.db";
+        String backupDBPath = "/sdcard/accounting.db";
+        File currentDB = new File(data, currentDBPath);
+        File backupDB = new File(backupDBPath);
+        try {
+            source = new FileInputStream(currentDB).getChannel();
+            destination = new FileOutputStream(backupDB).getChannel();
+            destination.transferFrom(source, 0, source.size());
+            source.close();
+            destination.close();
+            Toast.makeText(this, "DB Exported!", Toast.LENGTH_LONG).show();
+        } catch(IOException e) {
+            e.printStackTrace();
         }
     }
 }

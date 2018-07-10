@@ -13,7 +13,7 @@
         n1:layout_height="wrap_content">
 
         <TextView
-            n1:id="@id/txt_sname"
+            n1:id="@+id/txtCR_DR"
             n1:layout_width="fill_parent"
             n1:layout_height="wrap_content"
             n1:layout_alignParentLeft="true"
@@ -25,7 +25,7 @@
             n1:textStyle="bold" />
 
         <TextView
-            n1:id="@id/txt_email"
+            n1:id="@+id/txtAmount"
             n1:layout_width="wrap_content"
             n1:layout_height="wrap_content"
             n1:layout_alignParentRight="true"
@@ -42,7 +42,7 @@
         n1:layout_marginTop="@dimen/s_details_mar_top">
 
         <TextView
-            n1:id="@id/txt_phone_no"
+            n1:id="@+id/txtBalanceAmount"
             n1:layout_width="wrap_content"
             n1:layout_height="wrap_content"
             n1:layout_alignParentLeft="true"
@@ -52,7 +52,7 @@
             n1:textSize="@dimen/s_email_size" />
 
         <TextView
-            n1:id="@id/txt_city"
+            n1:id="@+id/txtBal"
             n1:layout_width="wrap_content"
             n1:layout_height="wrap_content"
             n1:layout_alignParentRight="true"
@@ -118,7 +118,7 @@
             n1:textSize="@dimen/s_email_size" />
 
         <TextView
-            n1:id="@id/txt_product"
+            n1:id="@+id/txtNaration"
             n1:layout_width="wrap_content"
             n1:layout_height="wrap_content"
             n1:layout_marginLeft="@dimen/s_details_mar_left"

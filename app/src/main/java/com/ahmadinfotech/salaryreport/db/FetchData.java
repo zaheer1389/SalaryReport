@@ -23,6 +23,10 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Locale;
 
+import static android.R.attr.data;
+import static android.R.attr.format;
+import static java.lang.Double.parseDouble;
+
 public class FetchData {
   private static String TAG = "FetchData";
   private DecimalFormat df = new DecimalFormat("#.##");
@@ -38,7 +42,7 @@ public class FetchData {
   }
 
   public void clearTableData(String tableName){
-    //this.handler.getReadableDatabase().execSQL("DELETE FROM "+tableName);
+    this.handler.getReadableDatabase().execSQL("DELETE FROM "+tableName);
   }
 
   public boolean countTotalAccount() {
@@ -159,7 +163,7 @@ public class FetchData {
       while (c.moveToNext()) {
         double bal;
         try {
-          bal = Double.parseDouble(c.getString(c.getColumnIndex("bal")));
+          bal = parseDouble(c.getString(c.getColumnIndex("bal")));
         } catch (Exception e) {
           bal = 0.0d;
         }
@@ -181,6 +185,64 @@ public class FetchData {
     results.add(Long.valueOf(balAccounts));
     results.add(Long.valueOf((crAccounts + drAccounts) + balAccounts));
     return results;
+  }
+
+  public ArrayList<Transaction> getTransactions(Context context, String fromDate, String toDate, boolean checkOrder){
+    ArrayList<Transaction> transactions = new ArrayList();
+    SQLiteDatabase db = this.handler.getReadableDatabase();
+    Cursor c = db.rawQuery("select * from Transection where EntryDate between Date('" + fromDate + "') and Date('" + toDate + "') order by EntryDate asc", null);
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(AppConstants.DateFormat.DB_DATE);
+    SimpleDateFormat sdf1 = AppUtils.getDateFormat();
+    double totalCredit = 0.0d;
+    double totalDebit = 0.0d;
+    NumberFormat format = AppUtils.getCurrencyFormatter();
+    String mRsSymbol = SessionManager.getCurrency(context);
+
+    while (c.moveToNext()) {
+      Log.d(getClass().getSimpleName(), "Transaction");
+      Transaction transaction = new Transaction();
+      transaction.setDr_cr(c.getInt(c.getColumnIndex("dr_cr")));
+      String date = c.getString(c.getColumnIndex("EntryDate"));
+      try {
+        transaction.setDate(sdf1.format(simpleDateFormat.parse(date)));
+      } catch (Exception e) {
+        transaction.setDate(date);
+      }
+      transaction.setNarration(c.getString(c.getColumnIndex("Narration")));
+      transaction.setRemark(c.getString(c.getColumnIndex("Remark")));
+      try {
+        transaction.setCraditAmount(parseDouble(c.getString(c.getColumnIndex("Credit_Amount"))));
+        try {
+          transaction.setDebitAmount(parseDouble(c.getString(c.getColumnIndex("Debit_Amount"))));
+        } catch (Exception e2) {
+          transaction.setDebitAmount(0.0d);
+        }
+        transaction.setAId(c.getInt(c.getColumnIndex("AID")));
+        transaction.setTransactionId(c.getInt(c.getColumnIndex("TID")));
+        transaction.setImage(c.getBlob(c.getColumnIndex("Image")));
+        if (transaction.getDr_cr() == 1) {
+          totalCredit += transaction.getCraditAmount();
+        } else {
+          totalDebit += transaction.getDebitAmount();
+        }
+        if (totalCredit > totalDebit) {
+          transaction.setBalance(mRsSymbol + format.format(totalCredit - totalDebit) + "/-Cr");
+        } else if (totalDebit > totalCredit) {
+          transaction.setBalance(mRsSymbol + format.format(totalDebit - totalCredit) + "/-Db");
+        } else {
+          transaction.setBalance(mRsSymbol + "0.00/-");
+        }
+        transactions.add(transaction);
+      } catch (Exception e3) {
+        Log.e(getClass().getSimpleName(), "Could not create or Open the database");
+      }
+    }
+    c.close();
+    if (checkOrder && !SessionManager.getListOrder()) {
+      Collections.reverse(transactions);
+    }
+
+    return transactions;
   }
 
 
@@ -216,9 +278,9 @@ public class FetchData {
       transaction.setNarration(c.getString(c.getColumnIndex("Narration")));
       transaction.setRemark(c.getString(c.getColumnIndex("Remark")));
       try {
-        transaction.setCraditAmount(Double.parseDouble(c.getString(c.getColumnIndex("Credit_Amount"))));
+        transaction.setCraditAmount(parseDouble(c.getString(c.getColumnIndex("Credit_Amount"))));
         try {
-          transaction.setDebitAmount(Double.parseDouble(c.getString(c.getColumnIndex("Debit_Amount"))));
+          transaction.setDebitAmount(parseDouble(c.getString(c.getColumnIndex("Debit_Amount"))));
         } catch (Exception e2) {
           transaction.setDebitAmount(0.0d);
         }
@@ -304,11 +366,11 @@ public class FetchData {
       Log.d(TAG, "getTransectionTotal cursor =" + cursor);
       if (cursor.moveToFirst()) {
         try {
-          s1 = Double.parseDouble(cursor.getString(1));
+          s1 = parseDouble(cursor.getString(1));
         } catch (Exception e) {
         }
         try {
-          s2 = Double.parseDouble(cursor.getString(0));
+          s2 = parseDouble(cursor.getString(0));
         } catch (Exception e2) {
         }
       }
@@ -335,7 +397,7 @@ public class FetchData {
           //String pname = c.getString(c.getColumnIndex(ACCOUNT.NAME));
           String strBalance = c.getString(c.getColumnIndex("balance"));
           //account.setAccName(pname);
-          double bal = Double.parseDouble(strBalance);
+          double bal = parseDouble(strBalance);
           if (bal > 0.0d) {
             account.setCraditAmount(bal);
             totalCr += bal;
@@ -380,12 +442,12 @@ public class FetchData {
         int camt = cursor.getColumnIndex("SumOfCRAmount");
         String debit = cursor.getString(damt);
         try {
-          data.setCraditAmount(Double.parseDouble(cursor.getString(camt)));
+          data.setCraditAmount(parseDouble(cursor.getString(camt)));
         } catch (Exception e) {
           data.setCraditAmount(0.0d);
         }
         try {
-          data.setDebitAmount(Double.parseDouble(debit));
+          data.setDebitAmount(parseDouble(debit));
         } catch (Exception e2) {
           data.setDebitAmount(0.0d);
         }
@@ -406,6 +468,29 @@ public class FetchData {
     return data;
   }
 
+  public double getOpeningBalance(String toDate) {
+    String query = "SELECT (sum(Transection.Credit_Amount)+sum(Transection.Debit_Amount)) as bal FROM Transection\nWHERE Transection.EntryDate <= Date('" + toDate + "')";
+    double openingBal = 0;
+    try {
+      Cursor cursor = this.handler.getReadableDatabase().rawQuery(query, null);
+      Log.d("getDayTransaction " + cursor.getCount(), "" + query);
+      if (cursor.moveToFirst()) {
+        int clmDate = cursor.getColumnIndex("bal");
+        String debit = cursor.getString(clmDate);
+        try {
+          openingBal = Double.parseDouble(cursor.getString(clmDate));
+        } catch (Exception e) {
+          openingBal = 0.0d;
+        }
+        cursor.close();
+      }
+    } catch (Exception e3) {
+      e3.printStackTrace();
+      Log.e(getClass().getSimpleName(), "Could not create or Open the database");
+    }
+    return openingBal;
+  }
+
   public String getTotalBalance(int aId) {
     String balance = "0.00";
     Cursor cur = this.handler.getReadableDatabase().rawQuery("SELECT  AID, sum(Transection.Debit_Amount) AS SumOfDRAmount, sum(Transection.Credit_Amount) AS SumOfCRAmount FROM Transection  WHERE (((Transection.AID)=?)) ", new String[]{String.valueOf(aId)});
@@ -424,13 +509,13 @@ public class FetchData {
             String dates = cur.getString(damt);
             String camts = cur.getString(camt);
             try {
-              dr = Double.parseDouble(dates);
+              dr = parseDouble(dates);
             } catch (Exception e) {
               e.printStackTrace();
               dr = 0.0d;
             }
             try {
-              cr = Double.parseDouble(camts);
+              cr = parseDouble(camts);
             } catch (Exception e2) {
               e2.printStackTrace();
               cr = 0.0d;
@@ -490,13 +575,13 @@ public class FetchData {
         String dates = cur.getString(damt);
         String camts = cur.getString(camt);
         try {
-          dr = Double.parseDouble(dates);
+          dr = parseDouble(dates);
         } catch (Exception e) {
           e.printStackTrace();
           dr = 0.0d;
         }
         try {
-          cr = Double.parseDouble(camts);
+          cr = parseDouble(camts);
         } catch (Exception e2) {
           e2.printStackTrace();
           cr = 0.0d;
@@ -547,8 +632,8 @@ public class FetchData {
           account.setRemark(mobile);
           account.setNarration(email);
           account.setAId(aId);
-          account.setCraditAmount(Double.parseDouble(credit));
-          account.setDebitAmount(Double.parseDouble(debit));
+          account.setCraditAmount(parseDouble(credit));
+          account.setDebitAmount(parseDouble(debit));
           results.add(account);
         } while (c.moveToNext());
       }
