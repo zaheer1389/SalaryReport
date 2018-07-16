@@ -23,11 +23,15 @@ import com.ahmadinfotech.salaryreport.utils.AppUtils;
 import com.ahmadinfotech.salaryreport.utils.SessionManager;
 import com.itextpdf.text.Anchor;
 import com.itextpdf.text.BadElementException;
+import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Chapter;
+import com.itextpdf.text.Chunk;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Font.FontFamily;
+import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.Phrase;
 import com.itextpdf.text.Section;
@@ -35,6 +39,7 @@ import com.itextpdf.text.html.HtmlUtilities;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.pdf.draw.LineSeparator;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -65,7 +70,8 @@ public class ReportGenerator {
   private static List<PdfDao> mValues;
   private static Font smallBold = new Font(FontFamily.TIMES_ROMAN, HtmlUtilities.DEFAULT_FONT_SIZE, 1);
   private static Font subFont = new Font(FontFamily.TIMES_ROMAN, 16.0f, 1);
-  static double openingBal;
+    static Font boldFont = new Font(Font.FontFamily.TIMES_ROMAN, 12, Font.BOLD, BaseColor.BLACK);
+  static double openingBal,closingBal,totalCR,totalDR;
   static String fromDate, toDate;
 
   private class Task extends AsyncTask<String, Void, String> {
@@ -83,7 +89,7 @@ public class ReportGenerator {
         }
         this.filePath = ReportGenerator.this.getPDFfileName(PATH);
         Log.e("PDF Task", "path: 16842794");
-        Document document = new Document();
+        Document document = new Document(PageSize.A4,20,20,20,20);
         PdfWriter.getInstance(document, new FileOutputStream(this.filePath));
         document.open();
         ReportGenerator.addMetaData(document);
@@ -162,7 +168,7 @@ public class ReportGenerator {
     Intent intent = Intent.createChooser(target, "Open File");
     try {
       //intent.addFlags(DriveFile.MODE_READ_ONLY);
-      //mContext.startActivity(intent);
+      mContext.startActivity(intent);
     } catch (ActivityNotFoundException e) {
       e.printStackTrace();
     }
@@ -187,17 +193,32 @@ public class ReportGenerator {
 
   private static void createTable(Document document) throws BadElementException {
     try{
+        totalCR = 0;
+      totalDR = 0;
       int i;
       int len = mColumns.size();
       PdfPTable table = new PdfPTable(len);
+      table.setSpacingBefore(10);
+      table.setSpacingAfter(10);
+        table.setTotalWidth(PageSize.A4.getWidth()-40f);
+        table.setLockedWidth(true);
       for (i = 0; i < len; i++) {
-        PdfPCell c1 = new PdfPCell(new Phrase((String) mColumns.get(i)));
+        PdfPCell c1 = new PdfPCell(new Phrase((String) mColumns.get(i), boldFont));
         c1.setHorizontalAlignment(1);
+          c1.setUseAscender(true);
+          c1.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        c1.setBackgroundColor(new BaseColor(157, 223, 237));
         table.addCell(c1);
       }
       table.setHeaderRows(1);
       int j = 1;
       for (PdfDao dao : mValues) {
+          if(dao.isCrDr()){
+              totalCR += Double.parseDouble(dao.getSecond());
+          }
+          else{
+              totalDR += Double.parseDouble(dao.getThird());
+          }
         for (i = 0; i < len; i++) {
           switch (i) {
             case 0:
@@ -224,7 +245,18 @@ public class ReportGenerator {
         }
         j++;
       }
-      document.add(table);
+      Paragraph p = new Paragraph();
+        p.setIndentationLeft(20);
+        p.setIndentationRight(20);
+        p.add(table);
+      document.add(p);
+
+        Paragraph pp = new Paragraph("Total Credit : "+totalCR+"\nTotal Debit : "+totalDR+"\nClosing Balance : "+closingBal, smallBold);
+        pp.setLeading(15);
+        document.add(pp);
+        document.add(Chunk.NEWLINE);
+        LineSeparator ls = new LineSeparator();
+        document.add(new Chunk(ls));
     }
     catch (Exception e){
       e.printStackTrace();
@@ -242,6 +274,11 @@ public class ReportGenerator {
     try{
       Date date = format.parse(fromDate);
       Date date2 = format.parse(toDate);
+
+      Paragraph preface = new Paragraph("Salary Report from "+new SimpleDateFormat("MMM-yyyy").format(date)+" to "+
+              new SimpleDateFormat("MMM-yyyy").format(date2));
+      preface.setAlignment(Element.ALIGN_CENTER);
+      document.add(preface);
 
       int months = monthsBetweenDates(date, date2);
 
@@ -263,24 +300,30 @@ public class ReportGenerator {
 
   public static void addMonth(Document document, int month){
     try{
-      Phrase anchor = new Anchor("", subFont);
-      anchor.add(new Paragraph("Month : "+openingBal, smallBold));
-      anchor.add(new Paragraph("Opening Balance : "+openingBal, smallBold));
-      document.add(anchor);
-
+      //closingBal = openingBal;
       SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat format2 = new SimpleDateFormat("MMM-yyyy");
 
       Calendar calendar = Calendar.getInstance();
       calendar.setTime(format.parse(fromDate));
       calendar.set(Calendar.MONTH, calendar.get(Calendar.MONTH)+month);
       String updatedFromDate = format.format(calendar.getTime());
 
-      Calendar c = Calendar.getInstance();
+        Calendar c = Calendar.getInstance();
       c.setTime(calendar.getTime());
       c.set(Calendar.DAY_OF_MONTH, c.getActualMaximum(Calendar.DAY_OF_MONTH));
       String updatedToDate = format.format(c.getTime());
 
-      ArrayList<Transaction> transactions = new FetchData().getTransactions(mContext, updatedFromDate, toDate, true);
+      ArrayList<Transaction> transactions = new FetchData().getTransactions(mContext, updatedFromDate, updatedToDate, true);
+
+      if(transactions.size() == 0){
+        return;
+      }
+
+      Paragraph p = new Paragraph("\nMonth : "+format2.format(calendar.getTime())+"\nOpening Balance : "+openingBal, smallBold);
+      p.setLeading(15);
+      document.add(p);
+
 
       List<Transaction> trans = transactions;
       mValues = new ArrayList();
@@ -294,6 +337,7 @@ public class ReportGenerator {
         pdf.setThird("" + dao.getDebitAmount());
         pdf.setFour(dao.getBalance());
         pdf.setFive(dao.getNarration());
+          pdf.setCrDr(dao.getDr_cr() == 1);
         mValues.add(pdf);
 
         openingBal += dao.getCraditAmount() + dao.getDebitAmount();
@@ -301,6 +345,7 @@ public class ReportGenerator {
 
       createTable(document);
 
+      //openingBal = closingBal;
     }
     catch(Exception e){
       e.printStackTrace();

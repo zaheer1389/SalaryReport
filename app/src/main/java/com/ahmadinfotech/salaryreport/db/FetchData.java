@@ -190,7 +190,9 @@ public class FetchData {
   public ArrayList<Transaction> getTransactions(Context context, String fromDate, String toDate, boolean checkOrder){
     ArrayList<Transaction> transactions = new ArrayList();
     SQLiteDatabase db = this.handler.getReadableDatabase();
-    Cursor c = db.rawQuery("select * from Transection where EntryDate between Date('" + fromDate + "') and Date('" + toDate + "') order by EntryDate asc", null);
+    String query = "select * from Transection where EntryDate between Date('" + fromDate + "') and Date('" + toDate + "') order by EntryDate asc, dr_cr desc";
+    Log.d(getClass().getSimpleName(), query);
+    Cursor c = db.rawQuery(query, null);
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat(AppConstants.DateFormat.DB_DATE);
     SimpleDateFormat sdf1 = AppUtils.getDateFormat();
     double totalCredit = 0.0d;

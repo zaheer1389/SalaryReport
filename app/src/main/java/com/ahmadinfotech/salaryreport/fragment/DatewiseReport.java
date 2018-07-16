@@ -42,7 +42,9 @@ public class DatewiseReport extends Fragment{
         View view = inflater.inflate(R.layout.frag_datewise_report,container,false);
 
         final EditText txtFromDate = (EditText) view.findViewById(R.id.txtFromDate);
+        txtFromDate.setText(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
         final EditText txtToDate = (EditText) view.findViewById(R.id.txtToDate);
+        txtToDate.setText(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
         Button btnShowReport = (Button) view.findViewById(R.id.btnShowReport);
 
         btnShowReport.setOnClickListener(new View.OnClickListener() {

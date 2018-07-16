@@ -9,6 +9,7 @@ public class PdfDao {
   private String mSeven;
   private String mSix;
   private String mThird;
+  private boolean crDr;
 
   public String getFirst() {
     return this.mFirst;
@@ -72,5 +73,13 @@ public class PdfDao {
 
   public void setSeven(String mSeven) {
     this.mSeven = mSeven;
+  }
+
+  public boolean isCrDr() {
+    return crDr;
+  }
+
+  public void setCrDr(boolean crDr) {
+    this.crDr = crDr;
   }
 }
