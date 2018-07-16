@@ -29,7 +29,7 @@ public class AppConstants {
   public static final String EMAIL = "email";
   public static final int EXEL = 1;
   public static final long FIVE_DATE = 1080000000;
-  public static final String FOLDER = "/SimpleAccounting";
+  public static final String FOLDER = "/SalaryReport";
   public static final String INDEX = "index";
   public static final String LAST_TRAN_REPORT = "Last_Transactions_Report";
   public static final int MIN_INTERACTION_COUNT = 2;

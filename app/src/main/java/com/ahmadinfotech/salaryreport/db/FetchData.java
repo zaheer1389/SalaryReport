@@ -228,9 +228,9 @@ public class FetchData {
           totalDebit += transaction.getDebitAmount();
         }
         if (totalCredit > totalDebit) {
-          transaction.setBalance(mRsSymbol + format.format(totalCredit - totalDebit) + "/-Cr");
+          transaction.setBalance(mRsSymbol + format.format(totalCredit + totalDebit) + "/-Cr");
         } else if (totalDebit > totalCredit) {
-          transaction.setBalance(mRsSymbol + format.format(totalDebit - totalCredit) + "/-Db");
+          transaction.setBalance(mRsSymbol + format.format(totalDebit + totalCredit) + "/-Db");
         } else {
           transaction.setBalance(mRsSymbol + "0.00/-");
         }
@@ -471,7 +471,7 @@ public class FetchData {
   }
 
   public double getOpeningBalance(String toDate) {
-    String query = "SELECT (sum(Transection.Credit_Amount)+sum(Transection.Debit_Amount)) as bal FROM Transection\nWHERE Transection.EntryDate <= Date('" + toDate + "')";
+    String query = "SELECT (sum(Transection.Credit_Amount)+sum(Transection.Debit_Amount)) as bal FROM Transection\nWHERE Transection.EntryDate < Date('" + toDate + "')";
     double openingBal = 0;
     try {
       Cursor cursor = this.handler.getReadableDatabase().rawQuery(query, null);

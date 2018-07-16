@@ -153,7 +153,7 @@ public class ReportGenerator {
   public String getPDFfileName(String folder) {
     String time = AppUtils.getUniqueFileName();
     try {
-      String filePath = AppUtils.getValidFileName(mHeader.getFirst());
+      String filePath = AppUtils.getValidFileName("SalaryReport");
       Log.e("PDF Task", "filePath: " + filePath);
       return folder + File.separator + filePath + time + ".pdf";
     } catch (Exception e) {
@@ -250,13 +250,15 @@ public class ReportGenerator {
         p.setIndentationRight(20);
         p.add(table);
       document.add(p);
-
+        closingBal = openingBal + totalCR + totalDR;
         Paragraph pp = new Paragraph("Total Credit : "+totalCR+"\nTotal Debit : "+totalDR+"\nClosing Balance : "+closingBal, smallBold);
         pp.setLeading(15);
         document.add(pp);
         document.add(Chunk.NEWLINE);
         LineSeparator ls = new LineSeparator();
         document.add(new Chunk(ls));
+
+        openingBal = closingBal;
     }
     catch (Exception e){
       e.printStackTrace();
@@ -340,7 +342,7 @@ public class ReportGenerator {
           pdf.setCrDr(dao.getDr_cr() == 1);
         mValues.add(pdf);
 
-        openingBal += dao.getCraditAmount() + dao.getDebitAmount();
+        //openingBal += dao.getCraditAmount() + dao.getDebitAmount();
       }
 
       createTable(document);
