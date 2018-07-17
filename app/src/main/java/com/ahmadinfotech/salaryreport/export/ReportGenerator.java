@@ -61,16 +61,16 @@ import static java.security.AccessController.getContext;
 
 @SuppressLint({"Instantiatable"})
 public class ReportGenerator {
-  private static Font catFont = new Font(FontFamily.TIMES_ROMAN, 18.0f, 1);
+  private static Font catFont = new Font(FontFamily.HELVETICA, 18.0f, 1);
   private static Format dateFormatSystem;
   private static List<String> mColumns;
   private static Context mContext;
   private static PdfDao mHeader;
   private static int mIndex;
   private static List<PdfDao> mValues;
-  private static Font smallBold = new Font(FontFamily.TIMES_ROMAN, HtmlUtilities.DEFAULT_FONT_SIZE, 1);
-  private static Font subFont = new Font(FontFamily.TIMES_ROMAN, 16.0f, 1);
-    static Font boldFont = new Font(Font.FontFamily.TIMES_ROMAN, 12, Font.BOLD, BaseColor.BLACK);
+  private static Font smallBold = new Font(FontFamily.HELVETICA, HtmlUtilities.DEFAULT_FONT_SIZE, 1);
+  private static Font subFont = new Font(FontFamily.HELVETICA, 16.0f, 1);
+    static Font boldFont = new Font(FontFamily.HELVETICA, 12, Font.BOLD, BaseColor.BLACK);
   static double openingBal,closingBal,totalCR,totalDR;
   static String fromDate, toDate;
 
@@ -208,6 +208,7 @@ public class ReportGenerator {
           c1.setUseAscender(true);
           c1.setVerticalAlignment(Element.ALIGN_MIDDLE);
         c1.setBackgroundColor(new BaseColor(157, 223, 237));
+        c1.setFixedHeight(18);
         table.addCell(c1);
       }
       table.setHeaderRows(1);

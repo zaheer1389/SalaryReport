@@ -228,9 +228,9 @@ public class FetchData {
           totalDebit += transaction.getDebitAmount();
         }
         if (totalCredit > totalDebit) {
-          transaction.setBalance(mRsSymbol + format.format(totalCredit + totalDebit) + "/-Cr");
+          transaction.setBalance(mRsSymbol + format.format(totalCredit + totalDebit));
         } else if (totalDebit > totalCredit) {
-          transaction.setBalance(mRsSymbol + format.format(totalDebit + totalCredit) + "/-Db");
+          transaction.setBalance(mRsSymbol + format.format(totalDebit + totalCredit));
         } else {
           transaction.setBalance(mRsSymbol + "0.00/-");
         }
